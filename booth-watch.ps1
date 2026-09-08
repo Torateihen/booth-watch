@@ -10,6 +10,7 @@ param(
     [switch] $Init,
     [switch] $NotifyDescription,
     [switch] $DryRun,
+    [switch] $TestPing,
     [string] $StateFile = (Join-Path $PSScriptRoot 'state.json')
 )
 
@@ -145,6 +146,20 @@ function New-Embed([string]$Title, [string]$Desc, [int]$Color, $Fp) {
     }
     if ($Fp.image) { $e['thumbnail'] = @{ url = $Fp.image } }
     return $e
+}
+
+# ---- テスト送信 ----
+if ($TestPing) {
+    Write-Host "テスト通知を送信します..." -ForegroundColor Cyan
+    Send-Discord @{
+        title       = '🔧 テスト通知'
+        description = "BOOTH更新監視からの疎通確認です。`nこれが見えていれば、実際の更新も同じ経路で届きます。"
+        color       = 3447003
+        timestamp   = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+        footer      = @{ text = "BOOTH / $Shop" }
+    }
+    Write-Host "送信しました。" -ForegroundColor Green
+    return
 }
 
 # ---- 前回の状態 ----

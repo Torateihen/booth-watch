@@ -5,6 +5,11 @@ on:
     # 30分ごと（GitHubのcronは混雑時に数分〜30分ほど遅れることがある）
     - cron: '*/30 * * * *'
   workflow_dispatch:
+    inputs:
+      test_ping:
+        description: 'Discordへの疎通確認だけ行う（BOOTHは見ない）'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -18,20 +23,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: リポジトリを取得
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: BOOTHを確認してDiscordに通知
         shell: pwsh
         env:
           BOOTH_WEBHOOK: ${{ secrets.BOOTH_WEBHOOK }}
+          TEST_PING: ${{ inputs.test_ping }}
         run: |
           if (-not $env:BOOTH_WEBHOOK) {
-            Write-Host "::error::Secrets に BOOTH_WEBHOOK が設定されていません"
+            Write-Host "::error::Secrets に BOOTH_WEBHOOK が設定されていません（値が空の可能性があります）"
             exit 1
           }
-          ./booth-watch.ps1 -Shop bbeyemtkw -StateFile ./state.json
+          if ($env:TEST_PING -eq 'true') {
+            ./booth-watch.ps1 -Shop bbeyemtkw -StateFile ./state.json -TestPing
+          }
+          else {
+            ./booth-watch.ps1 -Shop bbeyemtkw -StateFile ./state.json
+          }
 
       - name: 状態の変化をコミット
+        if: inputs.test_ping != true
         run: |
           if [ -n "$(git status --porcelain state.json)" ]; then
             git config user.name  "github-actions[bot]"
