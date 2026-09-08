@@ -22,7 +22,11 @@ $UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like
 if (-not $WebhookUrl) { $WebhookUrl = $env:BOOTH_WEBHOOK }
 if (-not $WebhookUrl) {
     $wf = Join-Path $PSScriptRoot 'webhook.txt'
-    if (Test-Path $wf) { $WebhookUrl = (Get-Content $wf -Raw -Encoding UTF8).Trim() }
+    if (Test-Path $wf) { $WebhookUrl = (Get-Content $wf -Raw -Encoding UTF8) }
+}
+if ($WebhookUrl) { $WebhookUrl = $WebhookUrl.Trim() }
+if ($WebhookUrl -and $WebhookUrl -notmatch '^https://(discord|discordapp)\.com/api/webhooks/') {
+    throw "Webhook URL の形が違います。https://discord.com/api/webhooks/... で始まる必要があります。"
 }
 
 function Get-Text([string]$Url) {
